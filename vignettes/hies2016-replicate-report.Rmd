@@ -1,0 +1,298 @@
+---
+title: "replicate-HIES-2016-report"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{replicate-HIES-2016-report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(tidyverse)
+library(labelled)
+library(here)
+```
+
+let's load some library first 
+
+# Reproduce table 2.1
+
+Let's bring in household data
+
+```{r}
+load("./data/HIES_2016/cover_hies_2016.rda")
+```
+
+Let's import household members data 
+
+```{r}
+load(here("./data/HIES_2016/hh_sec_1a.rda"))
+members <- hh_sec_1a
+```
+
+Check no of strata 
+
+```{r}
+hhold %>% 
+  summarize(no.of.strata=n_distinct(stratum16))
+```
+
+here i thought it will be 20 according to the report, but seems its different, only 16. Must be just rural and urban
+
+
+Now check the no. of substratum
+
+
+```{r}
+hhold %>% 
+  summarize(no.of.strata=n_distinct(stratum))
+```
+
+Now it matches with the no. of substratum mentioned in the report
+
+Check no. of psu 
+
+```{r}
+hhold %>% 
+  summarize(no.of.psu=n_distinct(psu))
+```
+
+It matches with the Report
+
+
+Let's check out other bunch of variables
+
+what is that ruc? 
+
+```{r}
+var_label(hhold$ruc)
+hhold %>% 
+  summarize(n_distinct(ruc))
+```
+
+So it seems 3 different values 
+
+```{r}
+hhold %>% 
+    count(ruc)
+```
+
+Check out urbrural
+
+```{r}
+hhold %>% 
+    count(urbrural)
+```
+
+First check whether there is unique household id 
+
+```{r}
+hhold %>% 
+  summarize(n_distinct(hhid))
+```
+
+In 2016, there seems to be unique hhid
+
+```{r}
+members %>% 
+  summarize(n_distinct(hhid))
+```
+
+Find household size 
+
+```{r}
+members <- members %>% 
+              group_by(hhid) %>% 
+               mutate(hsize=n())
+```
+
+Now we will select only household head and few other variables 
+
+```{r}
+members_tr <- members %>%
+            rename(rel_hh=s1aq02,
+                   sex_hh=s1aq01) %>% 
+            filter(rel_hh==1) %>% 
+             select(hhid, sex_hh, hsize, psu, stratum, stratum16, ruc, urbrural,hhwgt) %>% 
+            ungroup()
+```
+
+Find number male and female headed households
+
+```{r}
+members_tr %>%
+  #group_by(sex.hh) %>% 
+  summarise(n())
+```
+
+Alternative method to find grouping count
+
+```{r}
+members_tr %>% 
+  count(sex_hh)
+```
+
+ 
+Let's check out unweighted distribution of household size 
+
+Let's first find the overall mean household size 
+
+```{r}
+members_tr %>% 
+  summarise(national=mean(hsize))
+```
+
+First by rural urban category
+
+```{r}
+members_tr %>% 
+    group_by(urbrural) %>% 
+    summarize(mean_size=mean(hsize))
+```
+
+Then by sex of household head
+
+```{r}
+members_tr %>% 
+    group_by(sex.hh) %>% 
+    summarize(mean_size=mean(hsize))
+```
+
+Now the two way table as in the Report (Table number 2.1)
+
+```{r}
+members_tr %>% 
+    group_by(sex_hh, urbrural) %>% 
+    summarize(mean_size=mean(hsize))
+```
+
+
+Let's save members_tr object 
+
+```{r}
+save(members_tr, file=here("./data/HIES_2016/members_tr.rda"))
+```
+
+
+If we match with the report in the table, we will find that it is not exactly matching. This is because, so far we have not considered the survey design into our analysis. 
+
+Let's do that by introducing  the srvyr package 
+
+```{r}
+library(survey)
+library(srvyr)
+```
+
+Now let's insert the survey design 
+
+```{r}
+members_svy <- members_tr %>%  
+             as_survey(id=psu,strata=stratum,weights=hhwgt)
+class(members_svy)
+summary(members)
+```
+
+```{r}
+members_svy %>% 
+   summarise(national=survey_mean(hsize)) %>%  # note the use of survey mean
+   mutate(national=round(national,2)) %>% 
+   pull(national)
+```
+
+
+
+Rural urban category wise household size
+
+
+```{r}
+members_svy %>% 
+    group_by(urbrural) %>% 
+    summarize(mean_hsize=survey_mean(hsize)) %>% 
+    ungroup() %>% 
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+```
+
+Sex of household head wise household size 
+
+```{r}
+members_svy %>% 
+    group_by(sex_hh) %>% 
+    summarize(mean_hsize=survey_mean(hsize)) %>%          
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+```
+
+
+Now the final cross tabulation between sex of household head and rural urban category
+
+```{r}
+members_svy %>% 
+    group_by(sex_hh, urbrural) %>% 
+    summarize(mean_hsize=survey_mean(hsize)) %>% 
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+```
+Now let's save  members
+
+```{r}
+save(members_svy, file = here("./data/HIES_2016/members_svy.rda"))
+```
+
+
+We find that now the above numbers exactly matches Table 2.1 in the report. 
+
+
+## Table 2.2 
+
+```{r}
+members_svy %>%
+    mutate(hsize=as_factor(hsize),
+	   urbrural=as_factor(urbrural)) %>% 
+    group_by(hsize,urbrural) %>% 
+    survey_tally() %>% 
+    select(-n_se) %>% 
+    pivot_wider(names_from=urbrural,values_from=n) %>% 
+    mutate(National=Rural+Urban) %>% 
+    relocate(National,.after=hsize) %>% 
+    mutate(across(!hsize, .fns=~ round(.x/sum(.x,na.rm=T)*100,1),.names="perc_{.col}")) # we can avoid creating new variables by not including `names` argument
+```
+
+
+## Table 2.3
+
+```{r}
+load(here("./data/members.rda"))
+```
+
+
+
+# Health 
+
+First read the data 
+
+```{r}
+health <- read_dta("../HIES2016-20200905T093607Z-001/HIES2016/HH_SEC_3A.dta")
+```
+
+```{r}
+health %>% 
+    count(s3aq01)
+```
+
+```{r}
+health %>% 
+    count(s3aq02)
+```
+
+
+
+
+

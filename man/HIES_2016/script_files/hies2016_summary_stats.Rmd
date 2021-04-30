@@ -1,0 +1,60 @@
+---
+title: "`r glue::glue('hies2016_{i}_summary_stats')`"
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(knitr)
+library(summarytools)
+library(kableExtra)
+library(glue)
+library(labelled)
+opts_chunk$set(comment="#>", 
+	       warning=FALSE, 
+	       collapse=T,
+	       echo=FALSE, 
+	       message=FALSE, 
+	       results="asis", 
+	       cache=FALSE, 
+	       prompt=FALSE)
+```
+
+```{r, eval=T}
+assign("dat",get(load(here(glue("./data/HIES_2016/{i}.rda")))))
+dim(dat)
+```
+
+
+```{r, eval=T, echo=F}
+dat_label <- dat %>% 
+                       lapply(attr, which="label") %>% 
+		       lapply(function(x) ifelse(is.null(x), "", x)) %>% 
+		       unlist() %>% 
+		       tibble::enframe()  %>% 
+		       rename(var_name=name, 
+			      var_label=value)
+```
+
+
+
+```{r, echo=F, eval=T }
+kable(dat_label, format="html")  %>% 
+      kable_styling(full_width=TRUE) 
+```
+
+
+# Data description
+
+```{r, eval=T}
+dfSummary(dat,
+	  labels.col = TRUE,
+	  plain.ascii = FALSE, 
+	  style= "grid",
+	  valid.col=FALSE,
+	  na.col=FALSE,
+	  max.distinct.values=6,
+	  graph.col=F)
+```
+
+
+
