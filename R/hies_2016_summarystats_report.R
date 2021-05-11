@@ -15,10 +15,10 @@ for(i in 1:length(dta_files)){
     save(list=dta_files_clean[i], file=here(glue("./data/HIES_2016/{dta_files_clean[i]}.rda")))
 }
 
-for(i in dta_files_clean) {
-    rmarkdown::render(here('/man/HIES_2016/hies2016_summary_stats.Rmd'),  # file 2
-               output_file =  glue("hies2016_{i}.html"), 
-               output_dir = here("./man/HIES_2016/"))
-}
 
-load("./data/HIES_2016/hh_sec_1a.rda")
+walk(21:33, function(i) {
+    rmarkdown::render(here('man/HIES_2016/script_files/hies2016_summary_stats.Rmd'),  # file 2
+               output_file =  glue("hies2016_{dta_files_clean[i]}.html"), 
+               output_dir = here("./man/HIES_2016/html_summary_stats/"))
+})
+

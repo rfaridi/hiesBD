@@ -23,15 +23,15 @@ opts_chunk$set(comment="#>",
 
 ```{r, eval=T, results="asis"}
 
-rda_files <- list.files(here("./data/HIES_2016/"), pattern="rda")
-rda_files_clean <- str_replace(rda_files,"\\.rda","")
-rda_files_full <- here(glue("data/HIES_2016/{rda_files}"))
+source("./R/hies_2016_data_files_info.R")
 
+print(kable(hies_2016_data_files_info,format="html")) 
 
-walk(rda_files_clean, function(i) {
+cat('\n\n<!-- -->\n\n')
 
+walk(1:3, function(i) {
 
-assign("dat",get(load(here(glue("./data/HIES_2016/{i}.rda")))))
+assign("dat",get(load(here(glue("./data/HIES_2016/{rda_files_clean[i]}.rda")))))
 
 dat_label <- dat %>% 
                        lapply(attr, which="label") %>% 
@@ -41,16 +41,12 @@ dat_label <- dat %>%
 		       rename(var_name=name, 
 			      var_label=value)
 
-
-print(glue("# {i}"))
-
-
+print(glue("# {rda_files_clean[i]}"))
+print(glue("### {data_file_sec[i]}"))
+print(glue("#### {data_file_part[i]}"))
 cat('\n\n<!-- -->\n\n')
-
 print(kable(dat_label, format="html"))
-
 })
-
 ```
 
 

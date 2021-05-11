@@ -1,5 +1,5 @@
 ---
-title: "`r glue::glue('hies2016_{i}_summary_stats')`"
+title: "`r glue::glue('hies2016_{dta_files_clean[i]}_summary_stats')`"
 ---
 
 ```{r, include = FALSE}
@@ -17,11 +17,21 @@ opts_chunk$set(comment="#>",
 	       results="asis", 
 	       cache=FALSE, 
 	       prompt=FALSE)
+source(here("./R/hies_2016_file_info.R"))
 ```
 
+
 ```{r, eval=T}
-assign("dat",get(load(here(glue("./data/HIES_2016/{i}.rda")))))
-dim(dat)
+assign("dat",get(load(here(glue("./data/HIES_2016/{rda_files_clean[i]}.rda")))))
+
+print(glue("# {rda_files_clean[i]}"))
+
+
+print(glue("## {data_file_sec[i]}"))
+
+
+print(glue("### {data_file_part[i]}"))
+
 ```
 
 

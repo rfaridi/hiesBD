@@ -1,13 +1,22 @@
 ## code to prepare `DATASET` dataset goes here
 library(tidyverse)
 library(here)
-#The here directory
-setwd("/run/media/arch/0644C7B444C7A4B1/MISC/miscStuff2ARCHIVE/HIES/hies1990_91")
-hesbas.char <- scan(here("/Data/HESBAS.DAT"),what="")
-#Now let's turn into matrix
-hesbas.mat <- t(apply(as.matrix(hesbas.char),1,function(x) str_split_fixed(x,"",nchar(x))))
-map_df(hesbas.char,function(x) str_split_fixed(x,"",nchar(x))) -> hesbas.dat
+library(glue)
+dir_path <- "/run/media/arch/0644C7B444C7A4B1/MISC/miscStuff2ARCHIVE/HIES/hies1990_91/Data"
+hesbas.char <- scan(glue("{dir_path}/HESBAS.DAT"),what="")
+
+# HESBAS.DAT is a text where in each line following type of digits are there
+# 01111504020110101112511105105000002264021130915000003240721700000000000000000000
+# 01111504020110204240921700000000000000000000000000000000000000000000000000000000
+# 01111504020120100000200000000000100000000000300000344010005011200000000000000000
+# each line was saved as a single element in hesbas.char vector, length(hesbas.char) 
+# has the output of 249973, it means there were 249973 lines
+
+hesbas.mat <- t(apply(as.matrix(hesbas.char),1,function(x) str_split_fixed(x,"",nchar(x))))  # turning into a matrix
 #Now let's convert it into data frame 
+hesbas_dat <- map_df(as_tibble(hesbas.char),  function(x) str_split_fixed(x,"",nchar(x)))  
+
+
 hesbas.dat <- as_tibble(data.frame(hesbas.mat,stringsAsFactors = F))
 hesbas.dat[1:dim(hesbas.dat)[2]] <- lapply(hesbas.dat[1:dim(hesbas.dat)[2]],as.numeric)
 file.dat <- "bas2.RData"

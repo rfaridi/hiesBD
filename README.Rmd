@@ -22,8 +22,6 @@ The goal of hiesBD is to ...
 
 ## Installation
 
-
-
 You can install `hiesBD` [GitHub](https://github.com/) with:
 
 ``` r
