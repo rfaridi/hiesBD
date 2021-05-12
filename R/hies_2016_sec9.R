@@ -88,7 +88,6 @@ s9a2 %>%
     slice(n()) %>% 
     mutate(daily_food_exp=round(total_value/day,1)) 
 
-
 ## Method 3:  using summarize 
 
 s9a2 %>% 
@@ -98,7 +97,6 @@ s9a2 %>%
     select(hhid,day,total_value) %>% 
     summarise(across(everything(),last)) %>% 
     mutate(daily_food_exp=round(total_value/day,1)) 
-
 
 # Finding no. of cigarette smoking 
 
@@ -115,5 +113,18 @@ s9a2 %>%
 
 save(cigarette, file="./data/HIES_2016/cigarette.rda")
    
+load("./data/HIES_2016/cigarette.rda")
+
+# Finding whether there is any smoker 
+
+hh_sec_9a2 %>% 
+    group_by(hhid) %>% 
+    mutate(is_smoker=ifelse(s9a2q01==201, 1,0),
+	   total_smoker=sum(is_smoker))  %>% 
+    slice(n()) %>% 
+    mutate(smoker=ifelse(total_smoker > 0 , 1,0)) %>% 
+    select(-c(day:total_smoker)) %>% 
+    ungroup() -> smoker_2016
+    
 
 
