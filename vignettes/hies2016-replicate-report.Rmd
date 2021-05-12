@@ -293,6 +293,66 @@ health %>%
 ```
 
 
+# Smoking 
+
+```{r}
+load(here("./data/HIES_2016/smoker_2016.rda"))
+```
+
+```{r}
+smokers_svy <- smoker_2016 %>%  
+                  as_survey(id=psu,
+                            strata=stratum,
+                            weights=hhwgt)
+class(smokers_svy)
+summary(smokers_svy)
+```
+
+```{r}
+smokers_svy %>% 
+   summarise(national=survey_mean(smoker)) %>%  # note the use of survey mean
+   mutate(national=round(national,2)) %>% 
+   pull(national)
+```
+
+
+
+Rural urban category wise household size
+
+
+```{r}
+smokers_svy %>% 
+    group_by(urbrural) %>% 
+    summarize(smoker_perc=survey_mean(smoker)) %>% 
+    ungroup() %>% 
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+
+smoker_2016 %>% 
+    group_by(urbrural) %>% 
+    summarize(smoker_perc=mean(smoker))
+```
+
+Sex of household head wise household size 
+
+```{r}
+members_svy %>% 
+    group_by(sex_hh) %>% 
+    summarize(mean_hsize=survey_mean(hsize)) %>%          
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+```
+
+
+Now the final cross tabulation between sex of household head and rural urban category
+
+```{r}
+members_svy %>% 
+    group_by(sex_hh, urbrural) %>% 
+    summarize(mean_hsize=survey_mean(hsize)) %>% 
+    mutate(mean_hsize=round(mean_hsize,2)) %>% 
+    select(-mean_hsize_se)
+```
 
 
 

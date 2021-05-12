@@ -1,4 +1,5 @@
 library(tidyverse)
+
 library(magrittr)
 
 # load part a data 
@@ -125,6 +126,7 @@ hh_sec_9a2 %>%
     mutate(smoker=ifelse(total_smoker > 0 , 1,0)) %>% 
     select(-c(day:total_smoker)) %>% 
     ungroup() -> smoker_2016
-    
+
+save(smoker_2016, file="./data/HIES_2016/smoker_2016.rda")    
 
 
