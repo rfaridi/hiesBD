@@ -104,7 +104,16 @@ s9a2 %>%
 
 ## cigarette code is 201, we will first separate those out 
 
+s9a2 %>% 
+    filter(s9a2q01==201) %>% 
+    group_by(hhid) %>% 
+    arrange(hhid,day) %>%  
+    mutate(total_quantity=sum(s9a2q02),
+           total_value=sum(s9a2q04)) %>% 
+    #select(hhid,day,total_quantity,total_value) %>% 
+    slice(n()) ->  cigarette
 
-
+save(cigarette, file="./data/HIES_2016/cigarette.rda")
+   
 
 
