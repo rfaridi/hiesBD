@@ -1,0 +1,15 @@
+Let's first load the required libraries 
+
+```{r}
+library(tidyverse)
+library(socviz)
+library(survey)
+library(srvyr)
+```
+
+We will use the `gss_lon` dataset
+first some modifications 
+
+
+
+

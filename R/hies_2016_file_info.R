@@ -1,0 +1,78 @@
+rda_files <- list.files(here("./data/HIES_2016/"), pattern="rda")
+rda_files <- rda_files[-c(34,35)]
+rda_files_clean <- str_replace(rda_files,"\\.rda","")
+rda_files_full <- here(glue("data/HIES_2016/{rda_files}"))
+
+data_file_sec <- c("Cover: Survey information",
+		   "Section 1: Household Information Roster",
+                   "Section 1: Household Information Roster",
+                   "Section 1: Household Information Roster",
+                   "Section 2: Education",
+                   "Section 2: Education",
+                   "Section 3: Health",
+                   "Section 4: Economic activities and wage employment",
+                   "Section 5: Non-agricultural enterprises",
+                   "Section 6: Housing",
+                   "Section 6: Housing",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 7: Agriculture",
+                   "Section 8: Other assets and income",
+                   "Section 8: Other assets and income",
+                   "Section 8: Other assets and income",
+                   "Section 8: Other assets and income",
+                   "Section 8: Other assets and income",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption",
+                   "Section 9: Consumption"
+
+) 
+
+data_file_part <- c("",
+		    "Part A: Household information (all members listed in the roster",
+		    "Part B: Employment information (all persons 5 years and older)",
+		    "Part C: Socail safety net programme (all persons 5 years and older)",
+		    "Part A: Literacy and education attainment (all persons 5 years and older)",
+		    "Part B: Current enrollment (all persons 5 years and older)",
+		    "Part A: Illness and injuries (all household members)",
+		    "Part A-B: Activities (all persons 5 years and older) and Part B: Wage employment",
+		    "No parts",
+		    "Part A: Housing information",
+		    "Part B: Shocks and coping",
+		    "Part A: Land holding",
+		    "Part B: Crop production",
+		    "Part C: Non-crop activities (Livestock and poultry",
+		    "Part C: Non-crop activities (Livestock and poultry",
+		    "Part C: Non-crop activities (Livestock and poultry",
+		    "Part C: Non-crop activities (Livestock and poultry",
+		    "Part D: Expenses on agricultural inputs",
+		    "Part E: Agricultural assets",
+		    "Part A: Other property and assets",
+		    "Part B: Other income",
+		    "Part C: Migration and remittance",
+		    "Part D: Micro credit",
+		    "Part D: Micro credit",
+		    "Part A: Daily consumption",
+		    "Part A: Daily consumption",
+		    "Part B: Weekly consumption",
+		    "Part B: Weekly consumption",
+		    "Part C: Monthly non-food expenditure",
+		    "Part D: Annual non-food expenditure",
+		    "Part D: Annual non-food expenditure",
+		    "Part D: Annual non-food expenditure",
+		    "Part E: Inventory of consumer durable goods"
+
+)
+
+

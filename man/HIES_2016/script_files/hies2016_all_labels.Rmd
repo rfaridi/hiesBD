@@ -1,0 +1,52 @@
+---
+title: "`r glue::glue('hies2016_all_labels_summary_stats')`"
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(knitr)
+#library(summarytools)
+library(kableExtra)
+library(stringr)
+library(here)
+library(glue)
+library(labelled)
+opts_chunk$set(comment="#>", 
+	       warning=FALSE, 
+	       collapse=T,
+	       echo=FALSE, 
+	       message=FALSE, 
+	       results="asis", 
+	       cache=FALSE, 
+	       prompt=FALSE)
+```
+
+```{r, eval=T, results="asis"}
+
+source("./R/hies_2016_data_files_info.R")
+
+print(kable(hies_2016_data_files_info,format="html")) 
+
+cat('\n\n<!-- -->\n\n')
+
+walk(1:3, function(i) {
+
+assign("dat",get(load(here(glue("./data/HIES_2016/{rda_files_clean[i]}.rda")))))
+
+dat_label <- dat %>% 
+                       lapply(attr, which="label") %>% 
+		       lapply(function(x) ifelse(is.null(x), "", x)) %>% 
+		       unlist() %>% 
+		       tibble::enframe()  %>% 
+		       rename(var_name=name, 
+			      var_label=value)
+
+print(glue("# {rda_files_clean[i]}"))
+print(glue("### {data_file_sec[i]}"))
+print(glue("#### {data_file_part[i]}"))
+cat('\n\n<!-- -->\n\n')
+print(kable(dat_label, format="html"))
+})
+```
+
+

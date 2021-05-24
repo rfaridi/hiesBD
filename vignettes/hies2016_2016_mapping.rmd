@@ -1,0 +1,106 @@
+# Smoking 
+
+```{r}
+library(survey)
+library(srvyr)
+load(here("./data/HIES_2016/smoker_2016.rda"))
+```
+
+```{r}
+smokers_svy <- smoker_2016 %>%  
+                  as_survey(id=psu,
+                            strata=stratum,
+                            weights=hhwgt)
+class(smokers_svy)
+summary(smokers_svy)
+```
+
+```{r}
+smokers_svy %>% 
+   summarise(national=survey_mean(smoker)) %>%  # note the use of survey mean
+   mutate(national=round(national,2)) %>% 
+   pull(national)
+```
+
+
+
+Rural urban category wise household size
+
+
+```{r}
+smokers_svy %>% 
+    group_by(urbrural) %>% 
+    summarize(smoker_perc=survey_mean(smoker)) %>% 
+    ungroup()
+```
+
+
+```{r}
+smokers_svy %>% 
+    group_by(division_name) %>% 
+    summarize(smoker_perc=survey_mean(smoker)) %>% 
+    ungroup()  %>% 
+    rename(Division=division_name)  -> smokers_division
+```
+
+
+
+
+```{r}
+smokers_svy %>% 
+    group_by(zila_name) %>% 
+    summarize(smoker_perc=survey_mean(smoker)) %>% 
+    ungroup()  %>% 
+    rename(District=zila_name)  -> smokers_district
+save(smokers_district, file=here("./data/HIES_2016/smokers_district.rda"))
+```
+
+```{r}
+bd_adm1 <- read_sf("~/Dropbox/miscStuff/spatialStuff/BGD_adm/BGD2015/ADM1/bgd_bnd_adm1/bgd_bnd_adm1.shp") # this needs to be changed too
+bd_adm2 <- read_sf("~/Dropbox/miscStuff/spatialStuff/BGD_adm/BGD2015/ADM2/bgd_bnd_adm2.shp")
+```
+
+
+```{r}
+bd_adm1 %>% 
+    mutate(division=Division,
+	   Division=toupper(Division)) -> bd_adm1
+bd1_smokers <- bd_adm1 %>% 
+                 left_join(smokers_division, by=c("Division"))
+```
+
+```{r}
+ggplot(bd2_smokers) +
+    geom_sf(aes(fill=smoker_perc)) +
+    geom_sf_text(aes(label=district),size=3, color="white")+
+    scale_fill_gradient("smoker_perc", high = "darkred", low = "darkolivegreen1")+
+    theme_void()
+```
+
+
+
+
+```{r}
+bd_adm2 %>% 
+    mutate(district=District,
+	   District=toupper(District)) -> bd_adm2
+bd2_smokers <- bd_adm2 %>% 
+               left_join(smokers_district, by=c("District"))
+```
+
+```{r}
+ggplot(bd2_smokers) +
+    geom_sf(aes(fill=smoker_perc)) +
+    geom_sf_text(aes(label=district),size=3, color="white") +
+    scale_fill_gradient("smoker_perc", high = "darkred", low = "darkolivegreen1") +
+    theme_void()
+```
+
+```{r}
+ggplot(bd1_smokers) +
+    geom_sf(aes(fill=smoker_perc)) +
+    geom_sf_text(aes(label=division),size=3, color="white")+
+    scale_fill_gradient("smoker_perc", high = "darkred", low = "darkolivegreen1") +
+    theme_void()
+```
+
