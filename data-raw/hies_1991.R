@@ -1,3 +1,4 @@
+
 ## code to prepare `DATASET` dataset goes here
 library(tidyverse)
 library(here)
@@ -116,6 +117,140 @@ label(hs91.dat1[,names(hs91.dat1)]) =
            rectype$FIELD.DESCRIPTION[
              which(rectype$FIELD.NAME==x & 
                   !is.na(rectype$FIELD.NAME))])
+hs91_dat9
+## code to prepare `DATASET` dataset goes here
+
+library(tidyverse)
+library(magrittr)
+library(glue)
+library(janitor)
+
+setwd("/run/media/arch/0644C7B444C7A4B1/MISC/miscStuff2ARCHIVE/HIES/hies1990_91")
+
+dir_path <- "/run/media/arch/0644C7B444C7A4B1/MISC/miscStuff2ARCHIVE/HIES/hies1990_91/Data"
+
+hesbas.char <- scan(glue("{dir_path}/HESBAS.DAT"),what="")
+hesbas.char2 <- hesbas.char[-length(hesbas.char)]
+
+bas <- tibble(bas=hesbas.char2)
+
+hesbas <- separate(bas,bas,glue("X{0:80}"),sep="") %>% 
+                   select(-1) %>% 
+		   as_tibble()
+
+save(hesbas, file="./data/HIES_1991/hesbas.rda")
+
+load("./data/HIES_1991/hesbas.rda")
+
+hesbas1 <- hesbas %>% 
+             filter(X13==1)
+
+load("./data-raw/hies91_rectype_whole.rda")
+
+rectype <- rectype_whole %>% 
+		     filter(rectype==glue("record-type-{x}") )  
+
+slice_start <- rectype %>% 
+                    pull(field_description) %>% 
+		    str_which(.,"MONTH")
+
+slice_end <- rectype %>% 
+                    pull(field_description) %>% 
+		    str_which(.,"blank") -1
+
+rectype %<>% 
+       slice(slice_start:slice_end) %>% 
+       filter(!str_detect(field_name,"RECINFO")) 
+
+# Now field positions (1-1, 2-3  etc are collected)
+
+field_position <- str_extract_all(
+                         rectype$position_from_to
+                  [!is.na(rectype$field_name)], "(\\d+)-*"
+                            ) 
+# tidy version of the above in the following but return 47 elements
+
+ field_position_tidy  <- rectype %>% 
+                        pull(position_from_to) %>% 
+                         str_extract_all( "(\\d+)-*")  %>% 
+			 .[!is.na(.)
+
+# Adding X in front of numbers so that matches with variable names in bas data                 
+field_position <- lapply(field_position,function(x) paste0("X",x))
+
+# In the following cold for each item, say X64 X65, it goes to bas2.1, extract 
+# those variables and combine those. The output is a list with 46 elements. In 
+# each elements, there is vector of those combined digits
+
+field_combine <- lapply(field_position,
+             function(x) {
+               do.call("paste0",lapply(x,function(v) {
+                 with(bas2.1,get(v))
+                 })
+                 )}
+               )
+# Tidy version
+
+## Less elegant
+field_combine <-  field_position %>% 
+                       map(~bas2.1[.x]) %>% 
+		       map(~paste0(pull(.x[,1]),pull(.x[,2])))
+## More elegant
+field_combine <-  field_position %>% 
+                       map(~bas2.1[.x]) %>% 
+		       map(~pull(unite(.x,"new",names(.x),sep="",remove=T)))
+
+## Even more elegant, extra step but much cleaner
+
+field_combine <-  field_position %>% 
+                       map(~bas2.1[.x]) %>% 
+		       map(~unite(.x,"new",names(.x),sep="",remove=T)) %>% 
+		       map(~pull(.x))
+	
+# creating a vector of field_names
+nlist <- rectype$field_name[!is.na(rectype$field_name)]
+# tidy version
+nlist_tidy <- rectype %>% 
+                  pull(field_name) %>% 
+		  .[!is.na(.)]
+# More tidy version
+nlist_tidy <- rectype %>% 
+                  filter(!is.na(field_name)) %>% 
+                  pull(field_name) 
+
+# naming the list 
+names(field_combine) <- nlist
+
+# tidyversion
+
+field_combine %<>%  # requires magrittr package
+    set_names(nlist) 
+
+
+# Idenfying those fields which have just one digit, like DIV
+
+field_single <- rectype$field_name[rectype$length<2 & 
+                             !is.na(rectype$field_name)]
+
+# tidy version
+field_single  <- rectype %>% 
+                   filter(length < 2, !is.na(field_name)) %>% 
+                     pull(field_name) 
+
+# field_combine is a list of 46 elements. Those elements are selected wwhich are single digit. For those digits are repeated, we need to just pick the first one. 
+
+field_combine[names(field_combine) %in% field_single] <- lapply(field_combine[names(field_combine) %in% field_single], 
+                                  function(x) 
+                                    str_extract(x,"^."))
+hs91_dat1 <- list2DF(field_combine) %>% 
+                    as_tibble()
+
+# Tidy version
+
+hs91_dat1 <- field_combine %>% 
+                  list2DF() %>% 
+		  as_tibble() %>% 
+		  mutate(across(any_of(field_single), ~str_extract(.x,"^.")))
 
 #save(hs91.dat1,file=paste0(dir,"hs91_dat1.RData"))
 load(file=paste0(dir,"hs91_dat1.RData"))
@@ -126,6 +261,21 @@ load(file=paste0(dir,"hs91_dat1.RData"))
 
 dat1 <- hs91.dat1
 dat1$hhid <- with(dat1,paste0(DIV,REGION,STRAT,PSU,HHNO))
+=======
+#now the first thing we do is to create a hhid
+
+load("./data/HIES_1991/hs91_dat1.RData")
+
+dat1 <- hs91_dat1  <- hs91.dat1
+
+dat1$hhid <- with(dat1,paste0(DIV,REGION,STRAT,PSU,HHNO))
+
+# tidy version
+
+dat1 %<>% 
+    mutate(hhid=paste0(DIV,REGION,STRAT,PSU,HHNO)) %>% 
+    relocate(hhid)
+
 #now try to find the unique no. of households
 
 length(unique(dat1$hhid))
@@ -137,6 +287,34 @@ by_dat <- group_by(dat1,hhid)
 summarise(by_dat,hsize=n(),
                   ur=unique(UR)
                   )
+=======
+# Tidy version
+
+dat1 %>% 
+    pull(hhid) %>% 
+    unique() %>% 
+    length()
+
+# we find that it is only 5248, the unique household number, but according to firstRead.doc it should be 5760, 
+
+dat1 %>% 
+    group_by(hhid) %>% 
+    count(hhid) %>% 
+    ungroup() %>% 
+    count(n)
+
+# In the above, we find by how much hhid has been repeated, it might be due to household member. 
+# It seems that I do not know the structure yet
+
+
+dat1 %>% 
+    count(hhid,UR) %>% 
+    arrange(hhid,UR)
+
+
+summarise(
+                  ur=unique(UR)
+                  ) 
 
 # the above produces error, that is mainly because in each household UR is not a unique number, but to my understanding it should have been an unique number, since a household can only be in only one category of rural or urban ( there are of course three different categories in urban)
 
@@ -162,6 +340,19 @@ table(hsiz$lur)
 #4832  384   32 
 
 # we see that quite a few households has more than one, meaning that there are more than one category of ru-ur in the household
+=======
+# we see that quite a few households has more than one, meaning that there are more than one category of ru-ur in the household
+
+table(hsiz$lur)
+
+# Tidy version 
+
+dat1 %>% 
+    group_by(hhid) %>% 
+    summarize(lur=n_distinct(UR)) %>% 
+    count(lur)
+    
+
 
 # let's find those which has 3
 
@@ -206,6 +397,13 @@ filter(dat1,hhid=="435010110") %>%
 
 dat1$hhid <- with(dat1,paste0(UR,DIV,REGION,STRAT,PSU,HHNO))
 
+=======
+# tidy version 
+
+dat1 %<>% 
+    mutate(hhid=paste0(UR,DIV,REGION,STRAT,PSU,HHNO))
+
+
 by_dat <- group_by(dat1,hhid)
 summarise(by_dat,hsize=n(),
                   ur=unique(UR))
@@ -213,6 +411,24 @@ summarise(by_dat,hsize=n(),
 #Here we end up with 5696 no. of obs, so we are getting but not there yet, let's now add the MON to hhid
 dat1 <- hs91.dat1
 dat1$hhid <- with(dat1,paste0(MON,UR,DIV,REGION,STRAT,PSU,HHNO))
+
+=======
+# tidy version 
+
+dat1 %>% 
+    distinct(hhid) %>% 
+    dim()
+
+#Here we end up with 5696 no. of obs, so we are getting but not there yet, let's now add the MON to hhid
+
+
+dat1 <- hs91.dat1
+dat1$hhid <- with(dat1,paste0(MON,UR,DIV,REGION,STRAT,PSU,HHNO))
+
+# tidy vesion
+
+dat1 %<>% 
+    mutate(hhid=paste0(MON,UR,DIV,REGION,STRAT,PSU,HHNO))
 
 by_dat <- group_by(dat1,hhid)
 stat <- summarise(by_dat,hsize=n(),
@@ -225,6 +441,19 @@ table(stat$lur)
 
 filter(dat1,
        grepl("435010110",hhid)) %>% 
+=======
+# tidy version
+
+dat1 %>% 
+    group_by(hhid) %>% 
+    summarize(lur=n_distinct(UR)) %>% 
+    count(lur)
+ 
+
+# ok great now, we end up with 5760 no. of hhold as mentioned by the FirsRead doc. And we also see that lur has just value of 1 all through as expected.  Now let's try those summary stat once again, particularly the id we checked earlier
+
+
+filter(dat1,grepl("435010110",hhid)) %>% 
           select(hhid,MSL1:AGE1) %>%
                    arrange(hhid,MSL1) 
 
@@ -267,6 +496,62 @@ hhdat1 <- arrange(hhdat1,hhid,MSL)
 load(file=paste0(dir,"hhdat1.RData"))
  
                   
+=======
+hhdat11 <- select(hs91_dat1,c(hhid,msl1:ind1))
+names(hhdat11) <- sub("\\d$","",names(hhdat11))
+
+
+# tidy version
+
+dat1 %>% 
+    select(hhid, UR, DIV, MSL1:IND1) %>% 
+    set_names(str_replace(names(.),"\\d$","")) %>% 
+    clean_names() -> hhdat11
+
+dat1 %>% 
+   pivot_longer(matches("\\d"), names_to="vars") 
+
+hhdat12 <- select(hs91_dat1,c(hhid,msl2:ind2))
+names(hhdat12) <- sub("\\d$","",names(hhdat12))
+
+hhdat13 <- select(hs91_dat1,c(hhid,msl3:ind3))
+names(hhdat13) <- sub("\\d$","",names(hhdat13))
+
+hhdat1 <- rbind(hhdat11,hhdat12,hhdat13)  %>%
+                  filter(!msl=="00") %>%
+                    arrange(hhid,msl)    
+ 
+hhdat1$msl <- sub("^0","",hhdat1$msl)
+hhdat1$msl <- as.numeric(hhdat1$msl)
+hhdat1 <- hhdat1 %>% 
+             filter(!sex=="0",!rel=="0") %>% 
+             filter(sex=="1" | sex=="2") %>% 
+             arrange(hhid,msl) %>% 
+	     select(-MSL)
+                    #save(hhdat1,file=paste0(dir,"hhdat1.RData"))
+
+hs91_dat1_final <- hhdat1
+save(hs91_dat1_final, file="./data/HIES_1991/hs91_dat1_final.rda")
+
+# tidyversion
+
+hs91_dat1 %>% 
+    mutate(across(where(is.factor),as.character)) %>%  
+    pivot_longer(msl1:ind3, "hhvars") %>% 
+    filter(!value =="00" | !value==0 )  %>% 
+    mutate(hhvars=str_replace(hhvars,"\\d$","")) %>%  
+    filter(hhvars=="sex", value==0)
+    group_by(hhid,hhvars) %>% 
+    mutate(mem_id=paste0("0",row_number()))  %>% 
+    relocate(hhid,mem_id) %>% 
+    arrange(hhid,mem_id)  %>% 
+	   filter(hhvars!="msl", !value==0) %>% 
+    pivot_wider(c(hhid,mem_id), names_from=hhvars, values_from=value)%>% 
+	   filter(!is.na(sex))  
+
+save(hs91_dat1, file="./data/HIES_1991/hs91_dat1.rda")
+
+load(hhdat1, "./data/HIES_1991/hies91_hhdat1.rda")
 
 #Now time for some household roster statistics
 
@@ -298,3 +583,205 @@ hhdat1$EDU <- recode(hhdat1$EDU,
 
 
 usethis::use_data(DATASET, overwrite = TRUE)
+=======
+#===================================================
+#============  RECORD TYPE 2 ======================
+#===================================================
+
+load("./data/HIES_1991/hesbas.rda")
+
+hesbas2 <- hesbas %>% 
+             filter(X13==2)
+
+rectype_whole <- read_csv("./data-raw/hies91_rectype_whole.csv", skip=6) %>% 
+                                 clean_names() %>% 
+			     mutate(rows=row_number(),
+	   rectype=ifelse(str_detect(sl_no,"RECORD TYPE"), 
+			  sl_no, NA)) %>% 
+            relocate(rows,rectype) %>% 
+	    fill(rectype,.direction="down") %>% 
+	    mutate(rectype=str_replace(rectype,"-","") %>% 
+		   str_squish(.) %>% 
+		   str_replace_all(.,"\\s","-") %>% 
+		   tolower(.),
+	          field_description=str_replace_all(field_description,"BLANK|B L A N K","blank")
+	      )
+save(rectype_whole, file="./data-raw/hies91_rectype_whole.rda")
+	
+
+load("./data-raw/hies91_rectype_whole.rda")
+
+# Extract record type 2
+
+rectype2_start <- str_which(rectype_whole$sl_no, "RECORD TYPE - 2") + 2
+rectype2_end <- str_which(rectype_whole$field_description, "LATRINE")
+
+
+rectype2  <- rectype_whole %>% 
+                     slice(rectype2_start:rectype2_end) %>% 
+		     filter(!str_detect(field_name,"RECINFO"))
+
+field_position <- rectype2 %>% 
+                        pull(position_from_to) %>% 
+                         str_extract_all( "\\d+")  %>% 
+			 .[!is.na(.)]
+
+field_combine <-  field_position %>% 
+                       map(~select(hesbas2,num_range("X",.x[1]:.x[2]))) %>% 
+		       map(~unite(.x,"new",sep="")) %>% 
+		       map(~pull(.x))
+
+nlist <- rectype2 %>% 
+                  filter(!is.na(field_name)) %>% 
+                  pull(field_name) 
+
+field_combine %<>%  # requires magrittr package
+    set_names(nlist) 
+
+
+hs91_dat2 <- field_combine %>% 
+                  list2DF() %>% 
+		  as_tibble() %>% 
+		  clean_names() %>% 
+                mutate(hhid=paste0(mon,ur,div,region,strat,psu,hhno))  %>% 
+		  relocate(hhid) 
+hs91_dat2 %>% 
+     select(hhid,mon,ur,div,region,strat,psu) -> hs91_svy_info
+
+save(hs91_svy_info, file="./data/HIES_1991/hs91_svy_info.rda")
+
+hs91_dat2 %<>% 
+    select(-c(mon,ur,div,region,strat,psu,hhno))
+
+save(hs91_dat2, file="./data/HIES_1991/hs91_dat2.RData")
+
+#===================================================
+#============  RECORD TYPE 3 ======================
+#===================================================
+
+load("./data/HIES_1991/hesbas.rda")
+
+hesbas3 <- hesbas %>% 
+             filter(X13==3)
+
+load("./data-raw/hies91_rectype_whole.rda")
+
+rectype3  <- rectype_whole %>% 
+		     filter(rectype=="record-type-3") %>% 
+		     filter(!str_detect(field_name,"RECINFO")) %>% 
+		     slice(2:29)
+
+field_position  <- rectype3 %>% 
+                        pull(position_from_to) %>% 
+                         str_extract_all( "\\d+")  %>% 
+			 .[!is.na(.)]
+
+field_combine <-  field_position %>% 
+                       map(~select(hesbas3,num_range("X",.x[1]:.x[2]))) %>% 
+		       map(~unite(.x,"new",sep="")) %>% 
+		       map(~pull(.x))
+
+nlist <- rectype3 %>% 
+                  filter(!is.na(field_name)) %>% 
+                  pull(field_name) 
+
+field_combine %<>%  # requires magrittr package
+    set_names(nlist) 
+
+
+hs91_dat3 <- field_combine %>% 
+                  list2DF() %>% 
+		  as_tibble() %>% 
+		  clean_names() %>% 
+                  mutate(hhid=paste0(mon,ur,div,region,strat,psu,hhno))  %>% 
+		  relocate(hhid) 
+hs91_dat3 %>% 
+     select(hhid,mon,ur,div,region,strat,psu) -> hs91_svy_info
+
+save(hs91_svy_info, file="./data/HIES_1991/hs91_svy_info.rda")
+
+hs91_dat3 %<>% 
+    select(-c(mon,ur,div,region,strat,psu,hhno))
+
+save(hs91_dat3, file="./data/HIES_1991/hs91_dat3.RData")
+
+
+#===================================================
+#============  RECORD TYPE 4 ======================
+#===================================================
+
+load("./data/HIES_1991/hesbas.rda")
+
+load("./data-raw/hies91_rectype_whole.rda")
+
+
+hs91_extract <- function(x) {
+
+print(glue("Now processing rectype no {x}"))
+
+hesbas_dat <- hesbas %>% 
+             filter(X13==x)
+
+
+rectype <- rectype_whole %>% 
+		     filter(rectype==glue("record-type-{x}") )  
+
+slice_start <- rectype %>% 
+                    pull(field_description) %>% 
+		    str_which(.,"MONTH")
+
+slice_end <- rectype %>% 
+                    pull(field_description) %>% 
+		    str_which(.,"blank") -1
+
+rectype %<>% 
+       slice(slice_start:slice_end) %>% 
+       filter(!str_detect(field_name,"RECINFO")) 
+
+field_position  <- rectype %>% 
+                        pull(position_from_to) %>% 
+                         str_extract_all( "\\d+")  %>% 
+			 .[!is.na(.)]
+
+field_combine <-  field_position %>% 
+                       map(~select(hesbas,num_range("X",.x[1]:.x[2]))) %>% 
+		       map(~unite(.x,"new",sep="")) %>% 
+		       map(~pull(.x))
+
+nlist <- rectype %>% 
+                  filter(!is.na(field_name)) %>% 
+                  pull(field_name) 
+
+field_combine %<>%  # requires magrittr package
+    set_names(nlist) 
+
+
+hs91_dat <- field_combine %>% 
+                  list2DF() %>% 
+		  as_tibble() %>% 
+		  clean_names() %>% 
+                  mutate(hhid=paste0(mon,ur,div,region,strat,psu,hhno))  %>% 
+		  relocate(hhid) 
+
+hs91_dat %<>% 
+    select(-c(mon,ur,div,region,strat,psu,hhno))
+
+assign(glue("hs91_dat{x}"), hs91_dat)
+
+save(list=glue("hs91_dat{x}"), file=glue("./data/HIES_1991/hs91_dat{x}.rda"))
+
+}
+
+hs91_dat1
+walk(1, hs91_extract)
+	     
+load("./data/HIES_1991/hs91_dat2.RData")
+load("./data/HIES_1991/hs91_dat3.rda")
+load("./data/HIES_1991/hs91_dat4.rda")
+load("./data/HIES_1991/hs91_dat9.rda")
+
+test <- list(hs91_dat2,hs91_dat3,hs91_dat4)  %>% 
+                       reduce(left_join, by="hhid")
+
+# my computer could not handle such large data
+
