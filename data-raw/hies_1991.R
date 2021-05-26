@@ -1,4 +1,6 @@
+hs91_dat9
 ## code to prepare `DATASET` dataset goes here
+
 library(tidyverse)
 library(magrittr)
 library(glue)
@@ -595,8 +597,11 @@ walk(1, hs91_extract)
 load("./data/HIES_1991/hs91_dat2.RData")
 load("./data/HIES_1991/hs91_dat3.rda")
 load("./data/HIES_1991/hs91_dat4.rda")
-test <- list(hs91_dat2,hs91_dat3,hs91_dat4)  %>% 
-    reduce(left_join, by="hhid")
+load("./data/HIES_1991/hs91_dat9.rda")
 
+test <- list(hs91_dat2,hs91_dat3,hs91_dat4)  %>% 
+                       reduce(left_join, by="hhid")
+
+# my computer could not handle such large data
 
 
