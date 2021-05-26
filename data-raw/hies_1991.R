@@ -772,7 +772,7 @@ save(list=glue("hs91_dat{x}"), file=glue("./data/HIES_1991/hs91_dat{x}.rda"))
 
 }
 
-hs91_dat1
+
 walk(1, hs91_extract)
 	     
 load("./data/HIES_1991/hs91_dat2.RData")
@@ -780,8 +780,8 @@ load("./data/HIES_1991/hs91_dat3.rda")
 load("./data/HIES_1991/hs91_dat4.rda")
 load("./data/HIES_1991/hs91_dat9.rda")
 
-test <- list(hs91_dat2,hs91_dat3,hs91_dat4)  %>% 
+hs91_dat234 <- list(hs91_dat2,hs91_dat3,hs91_dat4)  %>% 
                        reduce(left_join, by="hhid")
-
+save(hs91_dat234, file="./data/hs91_dat234.rda")
 # my computer could not handle such large data
 
