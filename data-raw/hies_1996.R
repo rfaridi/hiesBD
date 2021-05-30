@@ -715,10 +715,10 @@ save(hs91_dat3, file="./data/HIES_1991/hs91_dat3.RData")
 
 load("./data/HIES_1991/hesbas.rda")
 
-load("./data-raw/hies91_rectype_whole.rda")
+load("./data-raw/hies96_rectype_whole.rda")
 
 
-hs91_extract <- function(x) {
+hs96_extract <- function(x) {
 
 print(glue("Now processing rectype no {x}"))
 
@@ -763,7 +763,7 @@ hs96_dat <- field_combine %>%
                   list2DF() %>% 
 		  as_tibble() %>% 
 		  clean_names() %>% 
-                  mutate(hhid=paste0(mon,ur,div,region,psu,hhno))  %>% 
+                  mutate(hhid=paste0(mon,ur,div,region,district,thana,))  %>% 
 		  relocate(hhid) 
 
 hs96_dat %<>% 
@@ -776,8 +776,9 @@ save(list=glue("hs96_dat{x}"), file=glue("./data/HIES_1996/hs96_dat{x}.rda"))
 }
 
 
-walk(1, hs91_extract)
-	     
+walk(3, hs96_extract)
+
+load("./data/HIES_1996/hesbas_96.rda")	     
 load("./data/HIES_1991/hs91_dat2.RData")
 load("./data/HIES_1991/hs91_dat3.rda")
 load("./data/HIES_1991/hs91_dat4.rda")
