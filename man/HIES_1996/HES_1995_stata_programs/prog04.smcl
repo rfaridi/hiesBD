@@ -1,0 +1,275 @@
+{smcl}
+{com}{sf}{ul off}{txt}
+{com}. *set more off
+. clear
+{txt}
+{com}. set mem 32m
+{txt}(32768k)
+
+{com}. 
+. * Computes poverty lines for the various regions of interest.
+. 
+. * COMPUTING THE FOOD POVERTY LINE
+. * ----------------------------------------------------------------------
+. use programs\unitval
+{txt}
+{com}. sort AREA
+{txt}
+{com}. #delimit 
+{txt}delimiter now ;
+{com}. gen ZF=30.42*(0.397*UV003
+>         +0.040*UV004
+>         +0.040*UV020
+>         +0.012*UV069
+>         +0.027*UV077
+>         +0.058*UV125
+>         +0.020*UV135
+>         +0.020*UV155
+>         +0.020*UV187
+>         +0.048*UVFISH
+>         +0.150*UVVEG)*(2122/2154.205);
+{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. keep AREA ZF
+{txt}
+{com}. drop if AREA==.
+{txt}(0 observations deleted)
+
+{com}. save fline, replace
+{txt}file fline.dta saved
+
+{com}. * ----------------------------------------------------------------------
+. 
+. * EXCLUDING TOBACCO AND MISC. ITEMS FROM FOOD CONSUMPTION AGGREGATE
+. * ----------------------------------------------------------------------
+. use z192 if S192COL3>=220
+{txt}
+{com}. collapse S192COL6, by(HHID)
+{txt}
+{com}. gen NOTFOOD=4*S192COL6
+{txt}
+{com}. sort HHID
+{txt}
+{com}. save temp1, replace
+{txt}(note: file temp1.dta not found)
+file temp1.dta saved
+
+{com}. 
+. use programs\hhdata, clear
+{txt}
+{com}. merge HHID using temp1
+{err}master data not sorted
+{txt}{search r(5):r(5);}
+
+end of do-file
+{search r(5):r(5);}
+
+{com}. do programs\program04
+{txt}
+{com}. set more 1
+{txt}
+{com}. cap log using programs\prog04, replace
+{txt}
+{com}. *set more off
+. clear
+{txt}
+{com}. set mem 32m
+{txt}(32768k)
+
+{com}. 
+. * Computes poverty lines for the various regions of interest.
+. 
+. * COMPUTING THE FOOD POVERTY LINE
+. * ----------------------------------------------------------------------
+. use programs\unitval
+{txt}
+{com}. sort AREA
+{txt}
+{com}. #delimit 
+{txt}delimiter now ;
+{com}. gen ZF=30.42*(0.397*UV003
+>         +0.040*UV004
+>         +0.040*UV020
+>         +0.012*UV069
+>         +0.027*UV077
+>         +0.058*UV125
+>         +0.020*UV135
+>         +0.020*UV155
+>         +0.020*UV187
+>         +0.048*UVFISH
+>         +0.150*UVVEG)*(2122/2154.205);
+{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. keep AREA ZF
+{txt}
+{com}. drop if AREA==.
+{txt}(0 observations deleted)
+
+{com}. save fline, replace
+{txt}file fline.dta saved
+
+{com}. * ----------------------------------------------------------------------
+. 
+. * EXCLUDING TOBACCO AND MISC. ITEMS FROM FOOD CONSUMPTION AGGREGATE
+. * ----------------------------------------------------------------------
+. use z192 if S192COL3>=220
+{txt}
+{com}. collapse S192COL6, by(HHID)
+{txt}
+{com}. gen NOTFOOD=4*S192COL6
+{txt}
+{com}. sort HHID
+{txt}
+{com}. save temp1, replace
+{txt}file temp1.dta saved
+
+{com}. 
+. use programs\hhdata, clear
+{txt}
+{com}. merge HHID using temp1
+{err}master data not sorted
+{txt}{search r(5):r(5);}
+
+end of do-file
+{search r(5):r(5);}
+
+{com}. do programs\program04
+{txt}
+{com}. set more 1
+{txt}
+{com}. cap log using programs\prog04, replace
+{txt}
+{com}. *set more off
+. clear
+{txt}
+{com}. set mem 32m
+{txt}(32768k)
+
+{com}. 
+. * Computes poverty lines for the various regions of interest.
+. 
+. * COMPUTING THE FOOD POVERTY LINE
+. * ----------------------------------------------------------------------
+. use programs\unitval
+{txt}
+{com}. sort AREA
+{txt}
+{com}. #delimit 
+{txt}delimiter now ;
+{com}. gen ZF=30.42*(0.397*UV003
+>         +0.040*UV004
+>         +0.040*UV020
+>         +0.012*UV069
+>         +0.027*UV077
+>         +0.058*UV125
+>         +0.020*UV135
+>         +0.020*UV155
+>         +0.020*UV187
+>         +0.048*UVFISH
+>         +0.150*UVVEG)*(2122/2154.205);
+{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. keep AREA ZF
+{txt}
+{com}. drop if AREA==.
+{txt}(0 observations deleted)
+
+{com}. save fline, replace
+{txt}file fline.dta saved
+
+{com}. * ----------------------------------------------------------------------
+. 
+. * EXCLUDING TOBACCO AND MISC. ITEMS FROM FOOD CONSUMPTION AGGREGATE
+. * ----------------------------------------------------------------------
+. use z192 if S192COL3>=220
+{txt}
+{com}. collapse S192COL6, by(HHID)
+{txt}
+{com}. gen NOTFOOD=4*S192COL6
+{txt}
+{com}. sort HHID
+{txt}
+{com}. save temp1, replace
+{txt}file temp1.dta saved
+
+{com}. 
+. use programs\hhdata, clear
+{txt}
+{com}. merge HHID using temp1
+{txt}
+{com}. tab _merge
+
+     {txt}_merge {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}       1120       15.09       15.09
+{txt}          3 {c |}{res}       6300       84.91      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}       7420      100.00
+{txt}
+{com}. drop _merge
+{txt}
+{com}. sort AREA
+{txt}
+{com}. merge AREA using fline
+{txt}
+{com}. tab _merge
+
+     {txt}_merge {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          3 {c |}{res}       7420      100.00      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}       7420      100.00
+{txt}
+{com}. drop _merge
+{txt}
+{com}. sort HHID
+{txt}
+{com}. replace NOTFOOD=0 if NOTFOOD==.
+{txt}(1120 real changes made)
+
+{com}. replace FEXP=FEXP-NOTFOOD
+{txt}(6300 real changes made)
+
+{com}. gen    NFEXP=HHEXP-FEXP
+{txt}
+{com}. gen  PCNFEXP=NFEXP/HS
+{txt}
+{com}. gen   PCFEXP=FEXP/HS
+{txt}
+{com}. keep HHID HS HHEXP FEXP NFEXP PCEXP PCFEXP PCNFEXP AREA ZF EXFAC
+{txt}
+{com}. 
+. stop
+{err}unrecognized command:  stop
+{txt}{search r(199):r(199);}
+
+end of do-file
+{search r(199):r(199);}
+
+{com}. gen weight= EXFAC* HS
+{txt}
+{com}. sum  PCFEXP [aw=weight]
+
+{txt}    Variable {c |}     Obs      Weight        Mean   Std. Dev.       Min        Max
+{hline 13}{c +}{hline 65}
+      PCFEXP {c |}{res}    7420   116279192    458.8199   256.7181   4.388928   6701.655
+{txt}
+{com}. dis 432/764
+{res}.56544503
+{txt}
+{com}. sum  PCEXP [aw=weight]
+
+{txt}    Variable {c |}     Obs      Weight        Mean   Std. Dev.       Min        Max
+{hline 13}{c +}{hline 65}
+       PCEXP {c |}{res}    7420   116279192    763.8758   643.1877   92.08138   11298.47
+{txt}
+{com}. exit, clear
